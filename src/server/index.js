@@ -1,5 +1,8 @@
 const express = require('express');
 const os = require('os');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const expressAccessToken = require('express-access-token');
 const Config = require('./config.js');
 const ProcessScores = require('./lib/ProcessScores.js');
 const EvaluateDomain = require('./lib/EvaluateDomain.js');
@@ -11,10 +14,28 @@ const GoogleCompanyName = require('./lib/GoogleCompanyName.js');
 
 const app = express();
 app.use(express.static('dist'));
-app.get('/api/getUsername', (req, res) => res.send({ username: os.userInfo().username }));
+app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+const accessTokens = [
+  "test1",
+  "110546ae-627f-48d4-9cf8-fd8850e0ac7f",
+  "04b90260-3cb3-4553-a1c1-ecca1f83a381"
+];
+
+const firewall = (req, res, next) => {
+  const authorized = accessTokens.includes(req.accessToken);
+  if (!authorized) {
+    return res.status(403).send('Forbidden');
+  }
+  return next();
+};
+
+app.get('/api/getUsername', expressAccessToken, firewall, (req, res) => res.send({ username: os.userInfo().username }));
 app.listen(8080, () => console.log('Listening on port 8080!'));
 
-app.get('/api/company', (req, res) => {
+app.get('/api/company', expressAccessToken, firewall, (req, res) => {
   console.log(req.query);
   const { companyname } = req.query;
   const evaluators = [];
@@ -35,7 +56,7 @@ app.get('/api/company', (req, res) => {
   });
 });
 
-app.get('/api/companies', (req, res) => {
+app.get('/api/companies', expressAccessToken, firewall, (req, res) => {
   const { companies } = req.query;
   const toppicks = [];
 
