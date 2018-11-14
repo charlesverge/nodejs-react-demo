@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const firewall = (req, res, next) => {
-  db.one('SELECT COUNT(*) AS c FROM accesstokens WHERE token = $1', req.accessToken)
+  db.one('SELECT COUNT(*) AS c FROM accesstokens WHERE token = $1', [req.accessToken])
     .then((data) => {
       if (!(1 * data.c)) {
         return res.status(403).send('Forbidden');
