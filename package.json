@@ -1,20 +1,21 @@
 {
-  "name": "simple-react-full-stack",
+  "name": "nodejs-react-demo",
   "version": "1.0.0",
-  "description": "Boilerplate to build a full stack web application using React, Node.js, Express and Webpack.",
+  "description": "Sample nodejs and react application to locate domains for a company names",
   "main": "src/server/index.js",
   "scripts": {
     "build": "webpack --mode production",
     "start": "npm run build && node src/server/index.js",
     "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
-    "server": "nodemon src/server/index.js",
+    "server": "nodemon --inspect src/server/index.js",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
-  "author": "Sandeep Raveesh",
+  "author": "Charles Verge",
   "license": "ISC",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "express": "^4.16.3",
+    "google-search": "0.0.5",
     "react": "^16.5.2",
     "react-dom": "^16.5.2"
   },
