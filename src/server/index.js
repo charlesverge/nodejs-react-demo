@@ -41,6 +41,7 @@ app.get('/api/company', expressAccessToken, firewall, (req, res) => {
   console.log(req.query);
   const { companyname } = req.query;
   const evaluators = [];
+  const starttime = new Date().getTime();
   evaluators.push(new EvaluateDomain(companyname));
   evaluators.push(new EvaluateTitle(companyname));
   evaluators.push(new EvaluateDescription(companyname));
@@ -54,6 +55,8 @@ app.get('/api/company', expressAccessToken, firewall, (req, res) => {
     const results = {
       toppick: toppick.getDomain()
     };
+    const endtime = new Date().getTime() - starttime;
+    db.none('INSERT INTO events (name, time) VALUES ($1, $2)', ['companies', endtime]);
     res.send(JSON.stringify(results, null, 4));
   });
 });
@@ -61,19 +64,22 @@ app.get('/api/company', expressAccessToken, firewall, (req, res) => {
 app.get('/api/companies', expressAccessToken, firewall, (req, res) => {
   const { companies } = req.query;
   const toppicks = [];
+  const starttime = new Date().getTime();
 
   // Send completed top picks list in format [{companyname: String, domain: String}].
-  const sendTopPicks = (results) => {
+  const sendTopPicks = (results, start) => {
     res.header('Content-Type', 'application/json');
     const send = {
       data: results,
       length: results.length,
     };
+    const endtime = new Date().getTime() - start;
+    db.none('INSERT INTO events (name, time) VALUES ($1, $2)', ['companies', endtime]);
     return res.send(JSON.stringify(send, null, 4));
   };
 
   if (!companies || companies.length === 0) {
-    return sendTopPicks([]);
+    return sendTopPicks([], starttime);
   }
 
   const process = (result) => {
@@ -95,7 +101,7 @@ app.get('/api/companies', expressAccessToken, firewall, (req, res) => {
       domain: toppick.getDomain(),
     });
     if (companies.length === 0) {
-      sendTopPicks(toppicks);
+      sendTopPicks(toppicks, starttime);
       return true;
     }
     const company = companies.pop();
@@ -106,7 +112,7 @@ app.get('/api/companies', expressAccessToken, firewall, (req, res) => {
         .then(process)
         .catch((error) => {
           console.error('GoogleCompanyError:', error);
-          return sendTopPicks(toppicks);
+          return sendTopPicks(toppicks, starttime);
         });
     }, 250);
     return true;
